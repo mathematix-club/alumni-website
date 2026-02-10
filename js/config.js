@@ -5,13 +5,13 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth
 
 // --- PASTE YOUR FIREBASE CONFIG HERE ---
 const firebaseConfig = {
-    apiKey: "AIzaSyCM4gTTek83M2jKSxymcjnq2qDlAz-tCC0",
-    authDomain: "niser-alumni.firebaseapp.com",
-    projectId: "niser-alumni",
-    storageBucket: "niser-alumni.firebasestorage.app",
-    messagingSenderId: "816418809535",
-    appId: "1:816418809535:web:ea86a6e49d3406a4d6c80a",
-    measurementId: "G-GJ6VNSJ82P"
+    apiKey: "AIzaSyDLCb7FqinRcwfATQaceH5FNdh9Fq7cQNU",
+    authDomain: "alumni-website-mathematix.firebaseapp.com",
+    projectId: "alumni-website-mathematix",
+    storageBucket: "alumni-website-mathematix.firebasestorage.app",
+    messagingSenderId: "1048772376154",
+    appId: "1:1048772376154:web:fbaca6260c4b1128b88a63",
+    measurementId: "G-P8FWPM3BCY"
 };
 
 // Initialize and Export
