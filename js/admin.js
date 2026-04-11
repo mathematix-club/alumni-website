@@ -30,8 +30,8 @@ onAuthStateChanged(auth, (user) => {
         // User is Logged In
         loginSec.style.display = 'none';
         dashSec.style.display = 'block';
-        btnLogout.style.display = 'block';
-        btnChangePass.style.display = 'inline-block'; // <--- SHOW IT
+        document.getElementById('adminSidebar').style.display = 'flex';
+        document.getElementById('mainWrapper').style.marginLeft = 'var(--sidebar-width)';
         
         loadTable();
         loadInbox();
@@ -40,8 +40,8 @@ onAuthStateChanged(auth, (user) => {
         // User is Logged Out
         loginSec.style.display = 'block';
         dashSec.style.display = 'none';
-        btnLogout.style.display = 'none';
-        btnChangePass.style.display = 'none'; // <--- HIDE IT
+        document.getElementById('adminSidebar').style.display = 'none';
+        document.getElementById('mainWrapper').style.marginLeft = '0';
     }
 });
 
@@ -147,15 +147,24 @@ async function loadTable() {
     applyAdminFilters();
 }
 
-// 3. Admin Filter Logic
+function getBadgeClass(position) {
+    if (!position) return '';
+    const pos = position.toLowerCase();
+    if (pos.includes('phd') || pos.includes('doctoral')) return 'badge-phd';
+    if (pos.includes('faculty') || pos.includes('professor') || pos.includes('assist')) return 'badge-faculty';
+    if (pos.includes('postdoc') || pos.includes('post doc')) return 'badge-postdoc';
+    if (pos.includes('msc') || pos.includes('master')) return 'badge-msc';
+    return 'badge-default';
+}
+
 function applyAdminFilters() {
     const term = document.getElementById('adminSearch').value.toLowerCase();
     const prog = document.getElementById('adminFilterProg').value;
     const year = document.getElementById('adminFilterYear').value;
     const tbody = document.getElementById('admin-table-body');
+    const sidebar = document.getElementById('sidebar-nav');
 
     const filtered = adminData.filter(s => {
-        // Parse Batch
         const match = s.batch.match(/^(.*)\s+(\d{4})(?:-(\d{2,4}))?$/);
         const sProg = match ? match[1] : "";
         const sStart = match ? match[2] : "";
@@ -164,30 +173,85 @@ function applyAdminFilters() {
         if (year && sStart !== year) return false;
 
         if (term) {
-            const content = [s.name, s.batch, s.institute, s.email].join(" ").toLowerCase();
+            const content = [s.name, s.batch, s.institute, s.email, s.position].join(" ").toLowerCase();
             if (!content.includes(term)) return false;
         }
         return true;
     });
 
-    // Render Rows
-    tbody.innerHTML = '';
+    // Group Results
+    const grouped = {};
     filtered.forEach(s => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td class="fw-bold">${s.name}</td>
-            <td><span class="badge bg-secondary">${s.batch}</span></td>
-            <td><small>${s.institute || '-'}</small></td>
-            <td class="text-end">
-                <button class="btn btn-sm btn-outline-primary me-1 btn-edit"><i class="fas fa-edit"></i></button>
-                <button class="btn btn-sm btn-outline-danger btn-delete"><i class="fas fa-trash"></i></button>
-            </td>
-        `;
-        
-        // Use s.id (which we stored earlier)
-        row.querySelector('.btn-delete').addEventListener('click', () => deleteStudent(s.id, s.name));
-        row.querySelector('.btn-edit').addEventListener('click', () => startEdit(s.id, s));
-        tbody.appendChild(row);
+        if (!grouped[s.batch]) grouped[s.batch] = [];
+        grouped[s.batch].push(s);
+    });
+
+    tbody.innerHTML = '';
+    
+    if (sidebar) sidebar.innerHTML = '';
+
+    const batches = Object.keys(grouped);
+    
+    batches.forEach(batchName => {
+        const students = grouped[batchName];
+        const safeId = "batch-" + batchName.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+
+        // Populate Sidebar
+        if (sidebar) {
+            sidebar.innerHTML += `<a class="nav-link" href="#${safeId}">${batchName}</a>`;
+        }
+
+        // Add Header Row
+        const headerRow = document.createElement('tr');
+        headerRow.id = safeId;
+        headerRow.className = "table-light";
+        headerRow.innerHTML = `<td colspan="8" class="fw-bold text-dark py-3 border-bottom"><i class="fas fa-folder-open text-primary me-2"></i> ${batchName} <span class="badge bg-secondary ms-2">${students.length}</span></td>`;
+        tbody.appendChild(headerRow);
+
+        // Add Students
+        students.forEach(s => {
+            const row = document.createElement('tr');
+            
+            const avatarHtml = s.photo
+                ? `<img src="${s.photo}" class="avatar" alt="Photo" style="width: 40px; height: 40px;">`
+                : `<div class="avatar-placeholder" style="width: 40px; height: 40px;"><i class="fas fa-user text-muted"></i></div>`;
+
+            let contactHtml = '';
+            if (s.email) contactHtml += `<a href="mailto:${s.email}" class="icon-btn mb-1" title="Email"><i class="fas fa-envelope"></i></a>`;
+            if (s.website) contactHtml += `<a href="${s.website}" target="_blank" class="icon-btn" title="Website"><i class="fas fa-globe"></i></a>`;
+            
+            const badgeClass = getBadgeClass(s.position);
+            const positionHtml = s.position
+                ? `<span class="badge rounded-pill badge-custom ${badgeClass} d-block mb-1" style="width: fit-content;">${s.position}</span>`
+                : '';
+
+            row.innerHTML = `
+                <td width="60">${avatarHtml}</td>
+                <td>
+                    <div class="fw-bold text-dark">${s.name}</div>
+                </td>
+                <td>
+                    <div class="fw-bold">${s.supervisor || '-'}</div>
+                </td>
+                <td>
+                    <div class="small text-dark">${s.researchInterests || '-'}</div>
+                </td>
+                <td>
+                    ${positionHtml}
+                    <small class="text-muted d-block">${s.institute || ''}</small>
+                </td>
+                <td>${contactHtml}</td>
+                <td class="text-muted small">${s.additionalInfo || ''}</td>
+                <td class="text-end" style="min-width: 90px;">
+                    <button class="btn btn-sm btn-light text-primary me-1 btn-edit shadow-sm border" title="Edit Record"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-sm btn-light text-danger btn-delete shadow-sm border" title="Delete Record"><i class="fas fa-trash"></i></button>
+                </td>
+            `;
+            
+            row.querySelector('.btn-delete').addEventListener('click', () => deleteStudent(s.id, s.name));
+            row.querySelector('.btn-edit').addEventListener('click', () => startEdit(s.id, s));
+            tbody.appendChild(row);
+        });
     });
 }
 
@@ -264,26 +328,13 @@ function startEdit(id, data) {
     document.getElementById('inFile').value = ""; // Reset file picker
 
     // UI Updates
-    document.getElementById('formTitle').innerText = "Edit Student";
-    document.getElementById('btnSave').innerText = "Update";
+    document.getElementById('formTitle').innerHTML = '<i class="fas fa-user-edit text-primary me-2"></i> Edit Record';
     document.getElementById('btnSave').classList.replace('btn-primary-custom', 'btn-warning');
-    document.getElementById('btnCancelEdit').style.display = 'inline-block';
     
-    window.scrollTo(0,0);
+    // Open Modal
+    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('recordModal'));
+    modal.show();
 }
-
-// --- CANCEL ---
-document.getElementById('btnCancelEdit').addEventListener('click', () => {
-    document.getElementById('editDocId').value = '';
-    
-    // Clear Form
-    document.querySelectorAll('input, textarea, select').forEach(i => i.value = '');
-    
-    document.getElementById('formTitle').innerText = "Add New Student";
-    document.getElementById('btnSave').innerText = "Save Entry";
-    document.getElementById('btnSave').classList.replace('btn-warning', 'btn-primary-custom');
-    document.getElementById('btnCancelEdit').style.display = 'none';
-});
 
 // --- SAVE ENTRY ---
 document.getElementById('btnSave').addEventListener('click', async () => {
@@ -375,7 +426,11 @@ document.getElementById('btnSave').addEventListener('click', async () => {
         } else {
             await addDoc(collection(db, "students"), data);
         }
-        document.getElementById('btnCancelEdit').click();
+        
+        const modalEl = document.getElementById('recordModal');
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        if (modal) modal.hide();
+        
         loadTable();
         alert("Saved Successfully!");
     } catch (e) {
@@ -383,7 +438,7 @@ document.getElementById('btnSave').addEventListener('click', async () => {
         alert("Database Error: " + e.message);
     } finally {
         btn.disabled = false;
-        btn.innerText = "Save Entry";
+        btn.innerHTML = '<i class="fas fa-save me-2"></i> Commit Save';
     }
 });
 

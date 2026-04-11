@@ -1,15 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <title>NISER Alumni Archive</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
 
     <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
@@ -22,16 +25,17 @@
     </div>
 
     <div class="sidebar-container" id="sidebar">
-    
+
         <div class="sidebar-scroll-area">
             <div class="brand-title justify-content-between">
                 <div class="d-flex align-items-center gap-2">
                     <i class="fas fa-graduation-cap text-primary"></i>
                     <span>Alumni Hub</span>
                 </div>
-                <button class="btn btn-sm btn-light d-lg-none" onclick="toggleSidebar()"><i class="fas fa-times"></i></button>
+                <button class="btn btn-sm btn-light d-lg-none" onclick="toggleSidebar()"><i
+                        class="fas fa-times"></i></button>
             </div>
-            
+
             <div class="nav-label">Directories</div>
             <nav id="sidebar-nav" class="nav flex-column">
                 <div class="text-center mt-5 text-muted small">Loading...</div>
@@ -39,27 +43,47 @@
         </div>
 
         <div class="sidebar-footer">
-            <a href="join.html" class="btn-admin-sidebar" style="border-color: var(--primary); color: var(--primary);">
+            <a href="join.html" class="btn-primary-custom w-100 d-flex align-items-center justify-content-center gap-2"
+                data-bs-toggle="tooltip" data-bs-placement="top" title="Create a new alumni profile."
+                style="padding: 0.75rem; border-radius: 8px;">
                 <i class="fas fa-user-plus"></i> Join Network
             </a>
 
-            <button class="btn btn-outline-secondary w-100 mt-2 d-flex align-items-center justify-content-center gap-2" style="font-size: 0.9rem; padding: 0.6rem;" data-bs-toggle="modal" data-bs-target="#updateModal">
-                <i class="fas fa-paper-plane"></i> Request Update
-            </button>
+            <a href="update.html"
+                class="btn btn-outline-secondary w-100 mt-2 d-flex align-items-center justify-content-center gap-2"
+                data-bs-toggle="tooltip" data-bs-placement="top" title="Update your existing profile details."
+                style="padding: 0.75rem; border-radius: 8px;">
+                <i class="fas fa-user-edit"></i> Request Update
+            </a>
 
-            <a href="admin.html" class="btn-admin-sidebar mt-2">
+            <span class="d-block mt-2" data-bs-toggle="tooltip" data-bs-placement="top"
+                title="Send a direct message to the admin.">
+                <button class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-2"
+                    data-bs-toggle="modal" data-bs-target="#updateModal" style="padding: 0.75rem; border-radius: 8px;">
+                    <i class="fas fa-paper-plane"></i> DM Admin
+                </button>
+            </span>
+
+            <hr class="my-4 text-muted" style="border-color: var(--border-color); opacity: 0.2;">
+
+            <a href="admin.html"
+                class="btn btn-sm w-100 d-flex align-items-center justify-content-center gap-2 text-secondary admin-access-btn"
+                data-bs-toggle="tooltip" data-bs-placement="top" title="Restricted login for database administrators."
+                style="transition: 0.2s; padding: 0.5rem; border-radius: 8px;">
                 <i class="fas fa-lock"></i> Admin Access
             </a>
 
-            <button class="btn btn-outline-secondary w-100 mt-2 d-flex align-items-center justify-content-center gap-2" data-bs-toggle="modal" data-bs-target="#updateModal">
-                <i class="fas fa-paper-plane"></i> DM Admin
-            </button>
-
-            <div class="text-center mt-4 pt-3 border-top" style="font-size: 0.7rem; color: #94a3b8;">
-                Developed by 
-                <a href="https://sandipan04.github.io/webpage/" target="_blank" class="fw-bold text-decoration-none" style="color: #64748b;">
+            <div class="text-center mt-3" style="font-size: 0.7rem; color: #4b535e;">
+                Developed by
+                <a href="https://sandipan04.github.io/webpage/" target="_blank" class="fw-bold text-decoration-none"
+                    style="color: var(--text-gray);">
                     Sandipan Samanta
                 </a>
+            </div>
+
+            <div class="text-center mt-3 px-2" style="font-size: 0.6rem; color: #4b535e; line-height: 1.4;">
+                Note: This directory is designed to help students connect. Please be sensible and avoid spamming,
+                overloading the system with automated requests or any kind of cyber attack.
             </div>
         </div>
 
@@ -67,37 +91,46 @@
 
     <div class="main-content">
 
-        <div class="card-custom mb-4 p-3 border-0 bg-white shadow-sm">
-            <div class="row g-2">
-                <div class="col-md-4">
-                    <div class="input-group">
-                        <span class="input-group-text bg-light border-end-0"><i class="fas fa-search text-muted"></i></span>
-                        <input type="text" id="searchInput" class="form-control border-start-0 bg-light" placeholder="Search name, interests, institute...">
+        <div class="card-custom mb-4 p-3 border-0 shadow-sm">
+            <!-- Mobile Toggle Button -->
+            <button class="btn btn-light w-100 d-md-none fw-bold shadow-sm border" data-bs-toggle="collapse" data-bs-target="#filterContainer" aria-expanded="false" style="color: var(--text-dark);">
+                <i class="fas fa-filter text-primary me-2"></i> Search & Filters <i class="fas fa-chevron-down ms-2 small text-muted"></i>
+            </button>
+
+            <!-- Filter Controls Container -->
+            <div class="collapse d-md-block mt-3 mt-md-0" id="filterContainer">
+                <div class="row g-2">
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <span class="input-group-text border-end-0"><i class="fas fa-search text-muted"></i></span>
+                            <input type="text" id="searchInput" class="form-control border-start-0"
+                                placeholder="Search name, interests, institute...">
+                        </div>
                     </div>
-                </div>
-                
-                <div class="col-md-2">
-                    <select id="filterProg" class="form-select bg-light">
-                        <option value="">All Programmes</option>
-                        <option value="Int. MSc.">Int. MSc.</option>
-                        <option value="Int. PhD">Int. PhD</option>
-                        <option value="PhD">PhD</option>
-                        <option value="PostDoc">PostDoc</option>
-                        <option value="Faculty">Faculty</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <select id="filterStart" class="form-select bg-light">
-                        <option value="">Start Year</option>
+
+                    <div class="col-md-2">
+                        <select id="filterProg" class="form-select">
+                            <option value="">All Programmes</option>
+                            <option value="Int. MSc.">Int. MSc.</option>
+                            <option value="Int. PhD">Int. PhD</option>
+                            <option value="PhD">PhD</option>
+                            <option value="PostDoc">PostDoc</option>
+                            <option value="Faculty">Faculty</option>
                         </select>
-                </div>
-                <div class="col-md-2">
-                    <select id="filterEnd" class="form-select bg-light">
-                        <option value="">End Year</option>
+                    </div>
+                    <div class="col-md-2">
+                        <select id="filterStart" class="form-select">
+                            <option value="">Start Year</option>
                         </select>
-                </div>
-                <div class="col-md-2">
-                    <button id="btnReset" class="btn btn-outline-secondary w-100">Reset</button>
+                    </div>
+                    <div class="col-md-2">
+                        <select id="filterEnd" class="form-select">
+                            <option value="">End Year</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button id="btnReset" class="btn btn-outline-secondary w-100">Reset</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -118,24 +151,26 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="text-muted small">If you want to join (new user) or update an existing entry, then please use "Join Network" or "Update Profile" button in the sidebar.</p>
+                    <p class="text-muted small">If you want to join (new user) or update an existing entry, then please
+                        use "Join Network" or "Update Profile" button in the sidebar.</p>
                     <p class="text-muted small">Want to say something to the admin? Use the form below.</p>
-                    
+
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-secondary">Your Name</label>
                         <input type="text" id="msgName" class="form-control" placeholder="e.g. Rohan Das">
                     </div>
-                    
+
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-secondary">Batch (Optional)</label>
                         <input type="text" id="msgBatch" class="form-control" placeholder="e.g. 2017-22">
                     </div>
-                    
+
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-secondary">Message</label>
-                        <textarea id="msgContent" class="form-control" rows="4" placeholder="Konnichiwa! I'm glad to have a platform like this."></textarea>
+                        <textarea id="msgContent" class="form-control" rows="4"
+                            placeholder="Konnichiwa! I'm glad to have a platform like this."></textarea>
                     </div>
-                    
+
                     <div id="msgStatus" class="small text-danger"></div>
                 </div>
                 <div class="modal-footer">
@@ -146,7 +181,7 @@
         </div>
     </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
         function toggleSidebar() {
@@ -154,13 +189,22 @@
             document.querySelector('.sidebar-overlay').classList.toggle('active');
         }
         // Auto-close on mobile click
-        document.addEventListener('click', function(e) {
-            if(e.target.closest('.nav-link') && window.innerWidth < 992) {
+        document.addEventListener('click', function (e) {
+            if (e.target.closest('.nav-link') && window.innerWidth < 992) {
                 toggleSidebar();
             }
+        });
+
+        // Initialize tooltips
+        document.addEventListener("DOMContentLoaded", function () {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            })
         });
     </script>
 
     <script type="module" src="js/home.js"></script>
 </body>
+
 </html>

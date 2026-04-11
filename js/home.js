@@ -11,19 +11,19 @@ const currentYear = new Date().getFullYear();
 
 // Loop backwards from Next Year down to 2007
 for (let y = currentYear + 1; y >= 2007; y--) {
-    if(startSelect) startSelect.add(new Option(y, y));
-    if(endSelect) endSelect.add(new Option(y, y));
+    if (startSelect) startSelect.add(new Option(y, y));
+    if (endSelect) endSelect.add(new Option(y, y));
 }
 
 // --- LOAD DATA ---
 async function loadAlumni() {
     const container = document.getElementById('alumni-container');
     const sidebar = document.getElementById('sidebar-nav');
-    
+
     // Optional: Update Stats if elements exist
     const statAlumni = document.getElementById('total-alumni');
     const statBatches = document.getElementById('total-batches');
-    
+
     try {
         const q = query(collection(db, "students"), orderBy("batch", "desc"));
         const snapshot = await getDocs(q);
@@ -59,7 +59,7 @@ function isFuzzyMatch(text, query) {
     // Remove dots (K. L. -> K L) and lowercase everything
     const cleanText = text.toLowerCase().replace(/\./g, ' ');
     const cleanQuery = query.toLowerCase().replace(/\./g, ' ');
-    
+
     const textTokens = cleanText.split(/\s+/).filter(t => t.length > 0);
     const queryTokens = cleanQuery.split(/\s+/).filter(t => t.length > 0);
 
@@ -73,10 +73,10 @@ function isFuzzyMatch(text, query) {
             // A) Exact match or Substring (standard search)
             // B) Query starts with Text (e.g. Query "Kamal" matches Text "K")
             // C) Text starts with Query (e.g. Query "K" matches Text "Kamal")
-            
-            return tToken.includes(qToken) || 
-                   qToken.startsWith(tToken) || 
-                   tToken.startsWith(qToken);
+
+            return tToken.includes(qToken) ||
+                qToken.startsWith(tToken) ||
+                tToken.startsWith(qToken);
         });
     });
 }
@@ -105,15 +105,15 @@ function applyFilters() {
         if (term) {
             // Search in Name
             const nameMatch = isFuzzyMatch(s.name, term);
-            
+
             // Search in Supervisor (using same smart logic)
             const supervisorMatch = s.supervisor ? isFuzzyMatch(s.supervisor, term) : false;
 
             // Search in other fields (Standard "Includes" search is fine for these)
             const otherContent = [
-                s.institute, 
-                s.position, 
-                s.researchInterests, 
+                s.institute,
+                s.position,
+                s.researchInterests,
                 s.batch
             ].join(" ").toLowerCase();
             const otherMatch = otherContent.includes(term.toLowerCase());
@@ -148,7 +148,7 @@ function applyFilters() {
 //         const sProg = match ? match[1] : "";
 //         const sStart = match ? match[2] : "";
 //         let sEnd = match && match[3] ? match[3] : "";
-        
+
 //         // Normalize End Year (convert "22" -> "2022")
 //         if (sEnd.length === 2) sEnd = "20" + sEnd; 
 
@@ -167,7 +167,7 @@ function applyFilters() {
 //                 s.researchInterests, 
 //                 s.batch
 //             ].join(" ").toLowerCase();
-            
+
 //             if (!content.includes(term)) return false;
 //         }
 
@@ -184,11 +184,21 @@ function applyFilters() {
 //     renderPage(grouped);
 // }
 
+function getBadgeClass(position) {
+    if (!position) return '';
+    const pos = position.toLowerCase();
+    if (pos.includes('phd') || pos.includes('doctoral')) return 'badge-phd';
+    if (pos.includes('faculty') || pos.includes('professor') || pos.includes('assist')) return 'badge-faculty';
+    if (pos.includes('postdoc') || pos.includes('post doc')) return 'badge-postdoc';
+    if (pos.includes('msc') || pos.includes('master')) return 'badge-msc';
+    return 'badge-default';
+}
+
 // --- RENDER FUNCTION ---
 function renderPage(groupedData) {
     const container = document.getElementById('alumni-container');
     const sidebar = document.getElementById('sidebar-nav');
-    
+
     container.innerHTML = "";
     sidebar.innerHTML = "";
 
@@ -214,14 +224,19 @@ function renderPage(groupedData) {
         // 2. Table Rows
         let rows = students.map(s => {
             // Avatar Logic
-            const avatarHtml = s.photo 
-                ? `<img src="${s.photo}" class="avatar" alt="${s.name}">` 
+            const avatarHtml = s.photo
+                ? `<img src="${s.photo}" class="avatar" alt="${s.name}">`
                 : `<div class="avatar-placeholder">${s.name.charAt(0)}</div>`;
 
             // Contact Icons
             let contactHtml = '';
             if (s.email) contactHtml += `<a href="mailto:${s.email}" class="icon-btn" title="Email"><i class="fas fa-envelope"></i></a>`;
             if (s.website) contactHtml += `<a href="${s.website}" target="_blank" class="icon-btn" title="Website"><i class="fas fa-globe"></i></a>`;
+
+            const badgeClass = getBadgeClass(s.position);
+            const positionHtml = s.position
+                ? `<span class="badge rounded-pill badge-custom ${badgeClass}">${s.position}</span>`
+                : '';
 
             return `
             <tr>
@@ -236,8 +251,8 @@ function renderPage(groupedData) {
                     <div class="small text-dark">${s.researchInterests || '-'}</div>
                 </td>
                 <td>
-                    <div class="primary-text">${s.position || ''}</div>
-                    <span class="sub-text">${s.institute || ''}</span>
+                    ${positionHtml}
+                    <span class="sub-text ${s.position ? 'mt-1' : ''}">${s.institute || ''}</span>
                 </td>
                 <td>${contactHtml}</td>
                 <td class="text-muted small">${s.additionalInfo || ''}</td>
@@ -282,7 +297,7 @@ if (btnUpdate) {
     btnUpdate.addEventListener('click', async () => {
         const btn = document.getElementById('btnSendUpdate');
         const status = document.getElementById('msgStatus');
-        
+
         const name = document.getElementById('msgName').value;
         const batch = document.getElementById('msgBatch').value;
         const message = document.getElementById('msgContent').value;
@@ -318,9 +333,9 @@ if (btnUpdate) {
                 const backdrop = document.querySelector('.modal-backdrop');
                 if (backdrop) backdrop.remove();
             }
-            
+
             alert("Thanks! Your request has been sent to the Admin.");
-            
+
             // Clear form
             document.getElementById('msgName').value = "";
             document.getElementById('msgBatch').value = "";
@@ -338,12 +353,12 @@ if (btnUpdate) {
 }
 
 // --- EVENT LISTENERS FOR FILTERS ---
-if(document.getElementById('searchInput')) document.getElementById('searchInput').addEventListener('input', applyFilters);
-if(document.getElementById('filterProg')) document.getElementById('filterProg').addEventListener('change', applyFilters);
-if(document.getElementById('filterStart')) document.getElementById('filterStart').addEventListener('change', applyFilters);
-if(document.getElementById('filterEnd')) document.getElementById('filterEnd').addEventListener('change', applyFilters);
+if (document.getElementById('searchInput')) document.getElementById('searchInput').addEventListener('input', applyFilters);
+if (document.getElementById('filterProg')) document.getElementById('filterProg').addEventListener('change', applyFilters);
+if (document.getElementById('filterStart')) document.getElementById('filterStart').addEventListener('change', applyFilters);
+if (document.getElementById('filterEnd')) document.getElementById('filterEnd').addEventListener('change', applyFilters);
 
-if(document.getElementById('btnReset')) {
+if (document.getElementById('btnReset')) {
     document.getElementById('btnReset').addEventListener('click', () => {
         document.getElementById('searchInput').value = "";
         document.getElementById('filterProg').value = "";
