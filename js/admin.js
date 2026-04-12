@@ -4,8 +4,8 @@ import { collection, addDoc, getDocs, doc, deleteDoc, updateDoc, orderBy, query 
 import { signInWithEmailAndPassword, onAuthStateChanged, signOut, updatePassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // --- CONFIG FOR CLOUDINARY ---
-const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dqivrep05/image/upload";
-const CLOUDINARY_PRESET = "alumni_upload";
+const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dm85dhitk/image/upload";
+const CLOUDINARY_PRESET = "alumni";
 
 // --- 0. POPULATE YEARS AUTOMATICALLY ---
 const currentYear = new Date().getFullYear();
