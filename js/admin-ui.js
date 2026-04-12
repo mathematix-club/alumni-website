@@ -17,48 +17,54 @@ function toggleMaximize(primaryId, secondaryId) {
     const sidebar = document.getElementById('adminSidebar');
     const mainWrapper = document.getElementById('mainWrapper');
     const row = document.getElementById('dashboardRow');
-    
-    const icon = primary.querySelector('i.fa-expand') || primary.querySelector('i.fa-compress');
 
-    // If already maximized, restore
-    if (primary.classList.contains('col-xl-12')) {
-        // Restore Original
+    const isMaximized = primary.dataset.maximized === 'true';
+
+    // Find the expand/compress icon inside the button that triggered this
+    const expandIcon = primary.querySelector('.fa-expand');
+    const compressIcon = primary.querySelector('.fa-compress');
+
+    if (isMaximized) {
+        // --- RESTORE ---
+        primary.dataset.maximized = 'false';
+
+        // Restore original classes
         if (primaryId === 'leftPane') {
             primary.className = "col-xl-8 col-lg-7 d-block d-lg-block";
             secondary.className = "col-xl-4 col-lg-5 d-none d-lg-block";
         } else {
             primary.className = "col-xl-4 col-lg-5 d-none d-lg-block";
             secondary.className = "col-xl-8 col-lg-7 d-block d-lg-block";
-            
-            // Delay removing right anchor to keep animation smooth on way back
             setTimeout(() => row.classList.remove('justify-content-end'), 300);
         }
-        secondary.style.display = "block";
-        
-        // Show Sidebar
-        if(sidebar) sidebar.style.display = "flex";
-        if(mainWrapper) mainWrapper.style.marginLeft = "var(--sidebar-width)";
-        
-        // Update icon
-        if (icon) icon.classList.replace('fa-compress', 'fa-expand');
+
+        // Show sidebar
+        if (sidebar) sidebar.style.removeProperty('display');
+        if (mainWrapper) mainWrapper.style.marginLeft = 'var(--sidebar-width)';
+
+        // Swap icon
+        if (compressIcon) { compressIcon.classList.remove('fa-compress'); compressIcon.classList.add('fa-expand'); }
+
     } else {
-        // Directional Anchor Config
+        // --- MAXIMIZE ---
+        primary.dataset.maximized = 'true';
+
         if (primaryId === 'rightPane') {
             row.classList.add('justify-content-end');
         } else {
             row.classList.remove('justify-content-end');
         }
 
-        // Maximize Primary, Hide Secondary
+        // Full-width primary, hide secondary without disturbing Bootstrap classes
         primary.className = "col-xl-12 col-lg-12 d-block";
-        secondary.style.display = "none";
-        
-        // Hide Sidebar
-        if(sidebar) sidebar.style.display = "none";
-        if(mainWrapper) mainWrapper.style.marginLeft = "0";
-        
-        // Update icon
-        if (icon) icon.classList.replace('fa-expand', 'fa-compress');
+        secondary.className = "d-none";   // simple hide, we restore proper classes on un-maximize
+
+        // Hide sidebar
+        if (sidebar) sidebar.style.display = 'none';
+        if (mainWrapper) mainWrapper.style.marginLeft = '0';
+
+        // Swap icon
+        if (expandIcon) { expandIcon.classList.remove('fa-expand'); expandIcon.classList.add('fa-compress'); }
     }
 }
 
