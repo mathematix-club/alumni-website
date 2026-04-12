@@ -1,0 +1,9 @@
+/* Custom Markdown Aesthetics for Wiki */
+.markdown-body h1 { font-weight: 700; color: #0f172a; margin-bottom: 2rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; font-size: 2rem;}
+.markdown-body h2 { font-weight: 600; color: var(--primary); margin-top: 2.5rem; margin-bottom: 1rem; font-size: 1.5rem;}
+.markdown-body h3 { font-weight: 600; color: #334155; margin-top: 1.5rem; font-size: 1.2rem;}
+.markdown-body p { color: #475569; line-height: 1.7; }
+.markdown-body ul { color: #475569; line-height: 1.7; padding-left: 1.5rem; }
+.markdown-body hr { opacity: 0.1; margin: 2rem 0; }
+.markdown-body pre { background: rgba(0,0,0,0.05); padding: 1rem; border-radius: 8px; overflow-x: auto; }
+.markdown-body code { background: rgba(0,0,0,0.05); padding: 0.2rem 0.4rem; border-radius: 4px; font-family: monospace; color: #e11d48;}

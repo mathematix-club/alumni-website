@@ -44,66 +44,13 @@ A modern, serverless alumni directory designed to manage and display university 
 
 ---
 
-## 🚀 Setup Guide
+## 🚀 Comprehensive Documentation & Wiki
 
-To run this project, you need free accounts on Firebase (for the database) and Cloudinary (for images).
+All detailed documentation regarding setup, feature guides, and administration has been abstracted into the dedicated `docs/` folder in this repository. 
 
-### Step 1: Firebase Setup (Database & Auth)
-
-1. Go to the [Firebase Console](https://console.firebase.google.com/) and create a project.
-2. **Authentication**:
-    * Go to **Build > Authentication -> Get Started**.
-    * Enable **Email/Password**.
-    * **Important**: Go to the "Users" tab and manually create your first Admin account.
-3. **Firestore Database**:
-    * Go to **Build > Firestore Database -> Create Database**.
-    * Start in **Test Mode** (select a region near you).
-    * Go to the **Rules** tab and paste this to secure your data:
-
-        ```JavaScript
-        rules_version = '2';
-        service cloud.firestore {
-        match /databases/{database}/documents {
-            match /{document=**} {
-            allow read: if true;                 // Public can view
-            allow write: if request.auth != null; // Only Admin can edit
-            }
-        }
-        }
-        ```
-4. **Get Config**:
-    * Go to **Project Settings** (Gear icon) -> **General** -> **Your apps** (`</>`).
-     * Copy the `firebaseConfig` object.
-
-### Step 2: Cloudinary Setup (Images)
-
-1. Sign up at Cloudinary.com.
-2. Go to Settings (Gear icon) > Upload.
-3. Under Upload presets, click Add upload preset.
-    * **Signing Mode**: Select Unsigned (Crucial!).
-    * **Name**: Give it a name (e.g., `alumni_upload`).
-    * Click **Save**.
-4. Note down your Cloud Name from the Dashboard.
-
-### Step 3: Connect the Code
-
-1. **Firebase**: Open `js/config.js` and paste your config object:
-
-    ```JavaScript
-    const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",
-        authDomain: "...",
-        projectId: "...",
-        // ... rest of the keys
-    };
-    ```
-
-2. **Cloudinary**: Open `js/admin.js` and update the top variables:
-
-    ```JavaScript
-    const CLOUDINARY_URL = "[https://api.cloudinary.com/v1_1/YOUR_CLOUD_NAME/image/upload](https://api.cloudinary.com/v1_1/YOUR_CLOUD_NAME/image/upload)";
-    const CLOUDINARY_PRESET = "YOUR_UPLOAD_PRESET_NAME";
-    ```
+*   **[📖 User Guide](docs/user-guide.md):** Learn how to query the database, request profile updates, and join the network.
+*   **[🛡️ Admin Guide](docs/admin-guide.md):** Master the command center, navigate the dual-pane UI, and manage public queues.
+*   **[⚙️ Developer Guide](docs/developer-guide.md):** Full backend migration tutorials, Firebase security rules setup, and Cloudinary configuration.
 ---
 
 ## 🖥️ Local Development
