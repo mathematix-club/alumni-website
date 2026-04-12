@@ -117,8 +117,8 @@ document.getElementById('btnSubmit').addEventListener('click', async () => {
 
     if (fileInput.files.length > 0) {
         const file = fileInput.files[0];
-        if (file.size > 300 * 1024) {
-            alert("File too large (Max 300KB).");
+        if (file.size > 500 * 1024) {
+            alert("File too large (Max 500KB).");
             btn.disabled = false;
             return;
         }

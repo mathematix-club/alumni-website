@@ -79,12 +79,47 @@ Storing images directly in Firebase Storage requires setting up custom auth-toke
 3.  Add an **Upload Preset**.
     *   **CRITICAL:** Set "Signing Mode" precisely to **Unsigned**.
     *   Keep the preset name handy.
-4.  Open `js/admin.js` and `js/join.js`. At the top of those files, update the endpoints:
+4.  Open `js/admin.js`, `js/join.js`, and `js/update.js`. At the top of those files, update the endpoints:
     ```javascript
     const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/YOUR_CLOUD_NAME/image/upload";
     const CLOUDINARY_PRESET = "your_unsigned_preset_name";
     ```
-5.  *Note on File Size:* In `js/admin.js` and `js/join.js`, the upload script actively blocks files larger than `1MB` before making the network request to preserve resources.
+5.  *Note on File Size:* All upload scripts enforce a **500KB** maximum file size before making the network request, to prevent abuse and preserve Cloudinary resources.
+
+---
+
+## 💾 Local Backup & Restore
+
+The repository includes a Node.js-based backup system in the `scripts/` directory that creates a full offline copy of your Firebase database and Cloudinary images.
+
+### Prerequisites
+*   Node.js must be installed (this project uses NVM — run `nvm use --lts` if needed).
+*   Install dependencies from the project root: `npm install`
+*   A **Firebase Service Account Key** (JSON file) must be placed at `scripts/serviceAccountKey.json`.
+    1. Go to **Firebase Console → Project Settings → Service Accounts**.
+    2. Click **Generate new private key**.
+    3. Rename the downloaded file to `serviceAccountKey.json` and move it into the `scripts/` folder.
+
+> **Security:** `serviceAccountKey.json` and the `backups/` folder are both listed in `.gitignore` and will never be committed to GitHub.
+
+### Running a Backup
+From the project root directory, run:
+```bash
+node scripts/backup.js
+```
+This will:
+- Pull all `students`, `requests`, and `messages` documents from Firestore into `backups/database-backup.json`.
+- Scan all Cloudinary photo URLs in the database and download any images not already present in `backups/images/` (differential — skips what you already have).
+
+### Restoring from a Backup
+In the event of accidental data loss, run:
+```bash
+node scripts/restore.js
+```
+This will:
+- Read `backups/database-backup.json`.
+- Push every document back to their respective Firestore collections, preserving original document IDs.
+- Local images in `backups/images/` are not re-uploaded to Cloudinary (they remain as your local archive).
 
 ---
 

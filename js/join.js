@@ -49,9 +49,9 @@ document.getElementById('btnSubmit').addEventListener('click', async () => {
         const file = fileInput.files[0];
 
         // 1. Check Size (300KB Limit)
-        const maxSize = 300 * 1024; // 300KB in bytes
+        const maxSize = 500 * 1024; // 500KB
         if (file.size > maxSize) {
-            alert("File is too large! Please use an image under 300KB.");
+            alert("File is too large! Please use an image under 500KB.");
             helpText.classList.add("text-danger");
             btn.disabled = false;
             btn.innerText = "Submit Application";

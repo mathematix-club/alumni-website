@@ -1,6 +1,5 @@
-// js/admin.js
-import { db, auth } from './config.js'; // REMOVED STORAGE
-import { collection, addDoc, getDocs, doc, deleteDoc, updateDoc, orderBy, query } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { db, auth } from './config.js';
+import { collection, addDoc, getDocs, getDoc, doc, deleteDoc, updateDoc, orderBy, query } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { signInWithEmailAndPassword, onAuthStateChanged, signOut, updatePassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // --- CONFIG FOR CLOUDINARY ---
@@ -374,10 +373,10 @@ document.getElementById('btnSave').addEventListener('click', async () => {
         const file = fileInput.files[0];
 
         // --- NEW: SIZE RESTRICTION (1MB = 1024 * 1024 bytes) ---
-        const maxSize = 1 * 1024 * 1024; 
+        const maxSize = 500 * 1024; // 500KB
         
         if (file.size > maxSize) {
-            alert("File is too large! Max size is 1MB.");
+            alert("File is too large! Max size is 500KB.");
             status.innerText = "Upload failed: File too large";
             
             // Reset button and stop everything
@@ -524,7 +523,6 @@ async function loadInbox() {
 // 4. Attach Refresh Button
 document.getElementById('btnRefreshInbox').addEventListener('click', loadInbox);
 
-// --- LOAD APPROVALS (Updated to show Update vs New Join) ---
 async function loadApprovals() {
     const container = document.getElementById('approvals-container');
     container.innerHTML = '<div class="text-center small text-muted">Checking...</div>';
@@ -538,32 +536,95 @@ async function loadApprovals() {
             return;
         }
 
+        // Field labels for the diff display
+        const FIELD_LABELS = {
+            position: 'Position',
+            institute: 'Institute',
+            email: 'Email',
+            researchInterests: 'Research Interests',
+            website: 'Website',
+            additionalInfo: 'Notes',
+            photo: 'Photo'
+        };
+
         let html = '<div class="list-group list-group-flush">';
-        
-        snapshot.forEach(docSnap => {
+
+        // Build cards (fetch original docs in parallel for UPDATE requests)
+        const items = [];
+        for (const docSnap of snapshot.docs) {
             const req = docSnap.data();
-            // Encode data safely for the button attribute
+            let original = null;
+            if (req.type === 'UPDATE' && req.originalId) {
+                try {
+                    const origSnap = await getDoc(doc(db, 'students', req.originalId));
+                    if (origSnap.exists()) original = origSnap.data();
+                } catch(_) {}
+            }
+            items.push({ docSnap, req, original });
+        }
+
+        items.forEach(({ docSnap, req, original }) => {
             const dataString = encodeURIComponent(JSON.stringify(req));
-            
-            // 1. Determine Badge Type
-            let badgeHtml = '<span class="badge bg-success me-2">New Join</span>';
-            if (req.type === "UPDATE") {
-                badgeHtml = '<span class="badge bg-warning text-dark me-2">Update Request</span>';
+            const isUpdate = req.type === 'UPDATE';
+
+            const badgeHtml = isUpdate
+                ? '<span class="badge bg-warning text-dark me-2">Update Request</span>'
+                : '<span class="badge bg-success me-2">New Join</span>';
+
+            // Build diff rows for UPDATE requests
+            let diffHtml = '';
+            if (isUpdate && original) {
+                const diffRows = Object.entries(FIELD_LABELS)
+                    .filter(([key]) => {
+                        // Only show fields that actually changed and are present in request
+                        const oldVal = (original[key] || '').toString().trim();
+                        const newVal = (req[key] || '').toString().trim();
+                        return newVal && oldVal !== newVal;
+                    })
+                    .map(([key, label]) => {
+                        const oldVal = original[key] || '—';
+                        const newVal = req[key];
+                        if (key === 'photo') {
+                            return `<tr>
+                                <td class="text-muted small fw-bold" style="width:35%">${label}</td>
+                                <td><img src="${oldVal}" style="height:32px;border-radius:4px;" onerror="this.style.display='none'"> → <img src="${newVal}" style="height:32px;border-radius:4px;"></td>
+                            </tr>`;
+                        }
+                        return `<tr>
+                            <td class="text-muted small fw-bold" style="width:35%">${label}</td>
+                            <td class="small">
+                                <span class="text-danger text-decoration-line-through me-1">${oldVal}</span>
+                                <i class="fas fa-arrow-right text-muted small mx-1"></i>
+                                <span class="text-success fw-bold">${newVal}</span>
+                            </td>
+                        </tr>`;
+                    }).join('');
+
+                if (diffRows) {
+                    diffHtml = `
+                        <div class="mt-2">
+                            <table class="table table-sm table-borderless mb-0" style="font-size:0.8rem;">
+                                <tbody>${diffRows}</tbody>
+                            </table>
+                        </div>`;
+                } else {
+                    diffHtml = '<div class="text-muted small mt-1 fst-italic">No field changes detected.</div>';
+                }
+            } else if (isUpdate && !original) {
+                diffHtml = '<div class="text-muted small mt-1 fst-italic">(Original record not found — may have been deleted)</div>';
             }
 
-            // 2. Build HTML
             html += `
                 <div class="list-group-item bg-light mb-2 rounded border">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div style="flex:1; min-width:0;">
                             ${badgeHtml}
-                            <strong>${req.name}</strong> 
+                            <strong>${req.name}</strong>
                             <small class="text-muted">(${req.batch})</small>
-                            <div class="small text-secondary mt-1">
-                                ${req.position || ''} at ${req.institute || ''}
-                            </div>
+                            ${ !isUpdate ? `<div class="small text-secondary mt-1">${req.position || ''} at ${req.institute || ''}</div>` : '' }
+                            ${diffHtml}
                         </div>
-                        <div class="d-flex gap-2">
+                        <div class="d-flex gap-2 ms-2 flex-shrink-0">
                             <button class="btn btn-sm btn-success btn-approve" data-id="${docSnap.id}" data-entry="${dataString}">
                                 <i class="fas fa-check"></i> Approve
                             </button>
@@ -575,6 +636,7 @@ async function loadApprovals() {
                 </div>
             `;
         });
+
         html += '</div>';
         container.innerHTML = html;
 
