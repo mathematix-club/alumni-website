@@ -202,7 +202,27 @@ function renderPage(groupedData) {
     container.innerHTML = "";
     sidebar.innerHTML = "";
 
-    const batches = Object.keys(groupedData);
+    function getProgPriority(batchStr) {
+        const str = batchStr.toLowerCase();
+        if (str.includes('int') && str.includes('msc') && !str.includes('phd')) return 1;
+        if (str.includes('int') && str.includes('phd')) return 2;
+        if (str.includes('msc-phd') || str.includes('msc - phd')) return 2;
+        if (str.includes('phd')) return 3;
+        if (str.includes('postdoc') || str.includes('post-doc')) return 4;
+        if (str.includes('faculty')) return 5;
+        if (str.includes('staff')) return 6;
+        return 99;
+    }
+
+    const batches = Object.keys(groupedData).sort((a, b) => {
+        const pA = getProgPriority(a);
+        const pB = getProgPriority(b);
+        if (pA !== pB) return pA - pB;
+        
+        const yA = a.match(/\s+(\d{4})/) ? parseInt(a.match(/\s+(\d{4})/)[1]) : 0;
+        const yB = b.match(/\s+(\d{4})/) ? parseInt(b.match(/\s+(\d{4})/)[1]) : 0;
+        return yB - yA;
+    });
 
     // Show "No Matches" if filter is too strict
     if (batches.length === 0) {

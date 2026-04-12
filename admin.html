@@ -13,6 +13,15 @@
 
 <body>
 
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <div class="mobile-header" id="adminMobileHeader" style="display:none;">
+        <div class="d-flex align-items-center gap-2">
+            <button class="btn btn-light" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+            <span class="fw-bold">Admin Hub</span>
+        </div>
+    </div>
+
     <!-- Left Sidebar (Only visible on Dashboard after login) -->
     <div class="sidebar-container" id="adminSidebar" style="display:none;">
         <div class="sidebar-scroll-area">
@@ -30,11 +39,18 @@
         </div>
 
         <div class="sidebar-footer">
-            <button id="btnChangePass"
-                class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-2 mb-3"
-                data-bs-toggle="modal" data-bs-target="#passwordModal" style="border-radius: 8px;">
-                <i class="fas fa-key"></i> Change Password
-            </button>
+            <div class="d-flex gap-2 w-100 mb-3">
+                <button id="btnChangePass"
+                    class="btn btn-outline-secondary flex-grow-1 d-flex align-items-center justify-content-center gap-2"
+                    data-bs-toggle="modal" data-bs-target="#passwordModal" style="border-radius: 8px;">
+                    <i class="fas fa-key"></i> Password
+                </button>
+                <a href="wiki.html"
+                    class="btn btn-outline-secondary flex-grow-1 d-flex align-items-center justify-content-center gap-2"
+                    style="border-radius: 8px; padding: 0.5rem;">
+                    <i class="fas fa-book-open"></i> Guide
+                </a>
+            </div>
             <button id="btnLogout"
                 class="btn btn-danger w-100 d-flex align-items-center justify-content-center gap-2 mb-3"
                 style="border-radius: 8px;">
@@ -72,10 +88,16 @@
         <!-- DASHBOARD UI -->
         <div id="dashboard-section" style="display:none;">
 
+            <!-- Mobile Pane Toggle Buttons -->
+            <div class="d-flex d-lg-none mb-3 gap-2">
+                <button class="btn btn-primary-custom flex-grow-1" id="btnShowTable" onclick="switchMobilePane('table')"><i class="fas fa-database me-2"></i> Database</button>
+                <button class="btn btn-outline-secondary flex-grow-1" style="background:#fff;" id="btnShowQueues" onclick="switchMobilePane('queues')"><i class="fas fa-inbox me-2"></i> Action Queues</button>
+            </div>
+
             <div class="row g-4 transition-all" id="dashboardRow">
 
                 <!-- LEFT PANE: Data Table -->
-                <div class="col-xl-8 col-lg-7" id="leftPane" style="transition: width 0.3s ease;">
+                <div class="col-xl-8 col-lg-7 d-block d-lg-block" id="leftPane" style="transition: width 0.3s ease;">
                     <div class="d-flex justify-content-between align-items-center mb-0">
                         <h4 class="fw-bold mb-0 text-dark">Database Manager</h4>
                         <div>
@@ -134,7 +156,7 @@
                 </div>
 
                 <!-- RIGHT PANE: Queues -->
-                <div class="col-xl-4 col-lg-5" id="rightPane" style="transition: width 0.3s ease;">
+                <div class="col-xl-4 col-lg-5 d-none d-lg-block" id="rightPane" style="transition: width 0.3s ease;">
                     <div class="d-flex justify-content-between align-items-center mb-0">
                         <h4 class="fw-bold mb-0 text-dark">Action Queues</h4>
                         <button class="btn btn-light shadow-sm" onclick="toggleMaximize('rightPane', 'leftPane')"
@@ -304,77 +326,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-    <script>
-        // Maximize Logic for Split-Pane
-        function toggleMaximize(primaryId, secondaryId) {
-            const primary = document.getElementById(primaryId);
-            const secondary = document.getElementById(secondaryId);
-            const sidebar = document.getElementById('adminSidebar');
-            const mainWrapper = document.getElementById('mainWrapper');
-            const row = document.getElementById('dashboardRow');
-            
-            const icon = primary.querySelector('i.fa-expand') || primary.querySelector('i.fa-compress');
-
-            // If already maximized, restore
-            if (primary.classList.contains('col-xl-12')) {
-                // Restore Original
-                if (primaryId === 'leftPane') {
-                    primary.className = "col-xl-8 col-lg-7";
-                    secondary.className = "col-xl-4 col-lg-5";
-                } else {
-                    primary.className = "col-xl-4 col-lg-5";
-                    secondary.className = "col-xl-8 col-lg-7";
-                    
-                    // Delay removing right anchor to keep animation smooth on way back
-                    setTimeout(() => row.classList.remove('justify-content-end'), 300);
-                }
-                secondary.style.display = "block";
-                
-                // Show Sidebar
-                if(sidebar) sidebar.style.display = "flex";
-                if(mainWrapper) mainWrapper.style.marginLeft = "var(--sidebar-width)";
-                
-                // Update icon
-                if (icon) icon.classList.replace('fa-compress', 'fa-expand');
-            } else {
-                // Directional Anchor Config
-                if (primaryId === 'rightPane') {
-                    row.classList.add('justify-content-end');
-                } else {
-                    row.classList.remove('justify-content-end');
-                }
-
-                // Maximize Primary, Hide Secondary
-                primary.className = "col-xl-12 col-lg-12";
-                secondary.style.display = "none";
-                
-                // Hide Sidebar
-                if(sidebar) sidebar.style.display = "none";
-                if(mainWrapper) mainWrapper.style.marginLeft = "0";
-                
-                // Update icon
-                if (icon) icon.classList.replace('fa-expand', 'fa-compress');
-            }
-        }
-
-        // Quick Helper for 'Add Student'
-        function openAddStudentModal() {
-            document.getElementById('formTitle').innerHTML = '<i class="fas fa-user-plus text-primary me-2"></i> Add Record';
-            document.getElementById('editDocId').value = "";
-
-            // Clear inputs immediately
-            ['inName', 'inSupervisor', 'inInterests', 'inPos', 'inInst', 'inEmail', 'inWeb', 'inPhoto', 'inInfo', 'inProg', 'inStart', 'inEnd', 'inFile'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.value = "";
-            });
-            document.getElementById('uploadStatus').innerText = "No file chosen";
-
-            const modal = new bootstrap.Modal(document.getElementById('recordModal'));
-            modal.show();
-        }
-    </script>
-
+    <script src="js/admin-ui.js"></script>
     <script type="module" src="js/admin.js"></script>
 </body>
 
