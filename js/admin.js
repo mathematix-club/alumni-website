@@ -536,20 +536,7 @@ async function loadApprovals() {
             return;
         }
 
-        // Field labels for the diff display
-        const FIELD_LABELS = {
-            position: 'Position',
-            institute: 'Institute',
-            email: 'Email',
-            researchInterests: 'Research Interests',
-            website: 'Website',
-            additionalInfo: 'Notes',
-            photo: 'Photo'
-        };
-
-        let html = '<div class="list-group list-group-flush">';
-
-        // Build cards (fetch original docs in parallel for UPDATE requests)
+        // Fetch original docs for UPDATE requests
         const items = [];
         for (const docSnap of snapshot.docs) {
             const req = docSnap.data();
@@ -563,70 +550,40 @@ async function loadApprovals() {
             items.push({ docSnap, req, original });
         }
 
+        let html = '<div class="list-group list-group-flush">';
+
         items.forEach(({ docSnap, req, original }) => {
             const dataString = encodeURIComponent(JSON.stringify(req));
+            const originalString = original ? encodeURIComponent(JSON.stringify(original)) : '';
             const isUpdate = req.type === 'UPDATE';
 
             const badgeHtml = isUpdate
                 ? '<span class="badge bg-warning text-dark me-2">Update Request</span>'
                 : '<span class="badge bg-success me-2">New Join</span>';
 
-            // Build diff rows for UPDATE requests
-            let diffHtml = '';
-            if (isUpdate && original) {
-                const diffRows = Object.entries(FIELD_LABELS)
-                    .filter(([key]) => {
-                        // Only show fields that actually changed and are present in request
-                        const oldVal = (original[key] || '').toString().trim();
-                        const newVal = (req[key] || '').toString().trim();
-                        return newVal && oldVal !== newVal;
-                    })
-                    .map(([key, label]) => {
-                        const oldVal = original[key] || '—';
-                        const newVal = req[key];
-                        if (key === 'photo') {
-                            return `<tr>
-                                <td class="text-muted small fw-bold" style="width:35%">${label}</td>
-                                <td><img src="${oldVal}" style="height:32px;border-radius:4px;" onerror="this.style.display='none'"> → <img src="${newVal}" style="height:32px;border-radius:4px;"></td>
-                            </tr>`;
-                        }
-                        return `<tr>
-                            <td class="text-muted small fw-bold" style="width:35%">${label}</td>
-                            <td class="small">
-                                <span class="text-danger text-decoration-line-through me-1">${oldVal}</span>
-                                <i class="fas fa-arrow-right text-muted small mx-1"></i>
-                                <span class="text-success fw-bold">${newVal}</span>
-                            </td>
-                        </tr>`;
-                    }).join('');
-
-                if (diffRows) {
-                    diffHtml = `
-                        <div class="mt-2">
-                            <table class="table table-sm table-borderless mb-0" style="font-size:0.8rem;">
-                                <tbody>${diffRows}</tbody>
-                            </table>
-                        </div>`;
-                } else {
-                    diffHtml = '<div class="text-muted small mt-1 fst-italic">No field changes detected.</div>';
-                }
-            } else if (isUpdate && !original) {
-                diffHtml = '<div class="text-muted small mt-1 fst-italic">(Original record not found — may have been deleted)</div>';
-            }
+            const viewChangesBtn = isUpdate
+                ? `<button class="btn btn-sm btn-outline-secondary btn-view-diff"
+                        data-id="${docSnap.id}"
+                        data-entry="${dataString}"
+                        data-original="${originalString}"
+                        data-name="${req.name}">
+                        <i class="fas fa-eye me-1"></i>Changes
+                   </button>`
+                : '';
 
             html += `
                 <div class="list-group-item bg-light mb-2 rounded border">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div style="flex:1; min-width:0;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
                             ${badgeHtml}
                             <strong>${req.name}</strong>
                             <small class="text-muted">(${req.batch})</small>
-                            ${ !isUpdate ? `<div class="small text-secondary mt-1">${req.position || ''} at ${req.institute || ''}</div>` : '' }
-                            ${diffHtml}
+                            ${!isUpdate ? `<div class="small text-secondary mt-1">${req.position || ''} ${req.institute ? 'at ' + req.institute : ''}</div>` : ''}
                         </div>
-                        <div class="d-flex gap-2 ms-2 flex-shrink-0">
+                        <div class="d-flex gap-2 flex-shrink-0">
+                            ${viewChangesBtn}
                             <button class="btn btn-sm btn-success btn-approve" data-id="${docSnap.id}" data-entry="${dataString}">
-                                <i class="fas fa-check"></i> Approve
+                                <i class="fas fa-check"></i>
                             </button>
                             <button class="btn btn-sm btn-outline-danger btn-reject" data-id="${docSnap.id}">
                                 <i class="fas fa-times"></i>
@@ -640,16 +597,23 @@ async function loadApprovals() {
         html += '</div>';
         container.innerHTML = html;
 
-        // Attach Listeners
+        // Listeners
         document.querySelectorAll('.btn-reject').forEach(btn => {
             btn.addEventListener('click', (e) => rejectRequest(e.currentTarget.dataset.id));
         });
-        
         document.querySelectorAll('.btn-approve').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const id = e.currentTarget.dataset.id;
                 const data = JSON.parse(decodeURIComponent(e.currentTarget.dataset.entry));
                 approveRequest(id, data);
+            });
+        });
+        document.querySelectorAll('.btn-view-diff').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const b = e.currentTarget;
+                const req = JSON.parse(decodeURIComponent(b.dataset.entry));
+                const original = b.dataset.original ? JSON.parse(decodeURIComponent(b.dataset.original)) : null;
+                showDiffModal(b.dataset.id, req, original);
             });
         });
 
@@ -658,6 +622,91 @@ async function loadApprovals() {
         container.innerHTML = '<div class="text-danger small">Error loading approvals.</div>';
     }
 }
+
+// --- DIFF MODAL ---
+const FIELD_LABELS = {
+    position: 'Position',
+    institute: 'Institute',
+    email: 'Email',
+    researchInterests: 'Research Interests',
+    website: 'Website',
+    additionalInfo: 'Notes',
+    photo: 'Photo'
+};
+
+function showDiffModal(docId, req, original) {
+    document.getElementById('diffModalName').textContent = req.name + ' (' + req.batch + ')';
+
+    let bodyHtml = '';
+
+    if (original) {
+        const changedRows = Object.entries(FIELD_LABELS)
+            .filter(([key]) => {
+                const oldVal = (original[key] || '').toString().trim();
+                const newVal = (req[key] || '').toString().trim();
+                return newVal && oldVal !== newVal;
+            })
+            .map(([key, label]) => {
+                const oldVal = original[key] || '—';
+                const newVal = req[key];
+                if (key === 'photo') {
+                    return `<tr>
+                        <td class="text-muted fw-bold small align-middle" style="width:28%">${label}</td>
+                        <td>
+                            <img src="${oldVal}" style="height:48px;border-radius:6px;object-fit:cover;" onerror="this.style.display='none'">
+                            <i class="fas fa-arrow-right text-muted mx-2 small"></i>
+                            <img src="${newVal}" style="height:48px;border-radius:6px;object-fit:cover;">
+                        </td>
+                    </tr>`;
+                }
+                return `<tr>
+                    <td class="text-muted fw-bold small align-middle" style="width:28%">${label}</td>
+                    <td>
+                        <span class="text-danger text-decoration-line-through me-2">${oldVal}</span>
+                        <i class="fas fa-arrow-right text-muted small mx-1"></i>
+                        <span class="text-success fw-semibold ms-2">${newVal}</span>
+                    </td>
+                </tr>`;
+            }).join('');
+
+        if (changedRows) {
+            bodyHtml = `<table class="table table-sm table-borderless mb-0">${changedRows}</table>`;
+        } else {
+            bodyHtml = '<p class="text-muted fst-italic mb-0">No field differences detected.</p>';
+        }
+
+        const unchangedFields = Object.entries(FIELD_LABELS)
+            .filter(([key]) => {
+                const oldVal = (original[key] || '').toString().trim();
+                const newVal = (req[key] || '').toString().trim();
+                return !newVal || oldVal === newVal;
+            }).map(([,label]) => label);
+
+        if (unchangedFields.length) {
+            bodyHtml += `<p class="text-muted small mt-3 mb-0"><strong>Unchanged:</strong> ${unchangedFields.join(', ')}</p>`;
+        }
+    } else {
+        bodyHtml = '<p class="text-muted fst-italic">Original student record not found — it may have been deleted.</p>';
+    }
+
+    document.getElementById('diffModalBody').innerHTML = bodyHtml;
+
+    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('diffModal'));
+
+    // Clone to remove stale event listeners
+    const approveBtn = document.getElementById('diffModalApprove');
+    const rejectBtn  = document.getElementById('diffModalReject');
+    const freshApprove = approveBtn.cloneNode(true);
+    const freshReject  = rejectBtn.cloneNode(true);
+    approveBtn.replaceWith(freshApprove);
+    rejectBtn.replaceWith(freshReject);
+
+    freshApprove.addEventListener('click', () => { modal.hide(); approveRequest(docId, req); });
+    freshReject.addEventListener('click',  () => { modal.hide(); rejectRequest(docId); });
+
+    modal.show();
+}
+
 
 // --- REJECT ACTION ---
 async function rejectRequest(id) {

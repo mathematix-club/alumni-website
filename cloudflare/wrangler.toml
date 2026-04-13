@@ -1,0 +1,8 @@
+name            = "alumni-notifier"
+main            = "worker.js"
+compatibility_date = "2024-09-23"
+
+# Secrets are NOT stored here.
+# Set them once via the CLI:
+#   npx wrangler secret put DISCORD_WEBHOOK_URL
+#   npx wrangler secret put NOTIFY_SECRET

@@ -1,5 +1,6 @@
 import { db } from './config.js';
 import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { notifyDiscord } from './notify.js';
 
 // --- CONFIG FOR CLOUDINARY ---
 const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dm85dhitk/image/upload";
@@ -110,6 +111,7 @@ document.getElementById('btnSubmit').addEventListener('click', async () => {
     // --- SAVE TO FIRESTORE ---
     try {
         await addDoc(collection(db, "requests"), data);
+        notifyDiscord('new_join', data); // fire-and-forget
 
         status.innerHTML = `<div class="alert alert-success">✅ Application Sent! An admin will review it shortly.</div>`;
         status.scrollIntoView();
