@@ -1,5 +1,6 @@
 import { db } from './config.js';
 import { collection, getDocs, orderBy, query, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { notifyDiscord } from './notify.js';
 
 // --- GLOBAL VARIABLES ---
 let allStudents = []; // Store all data here for client-side filtering
@@ -338,6 +339,7 @@ if (btnUpdate) {
                 timestamp: new Date(),
                 status: "unread"
             });
+            notifyDiscord('dm_message', { name, batch, message }); // fire-and-forget
 
             // Close Modal safely
             const modalEl = document.getElementById('updateModal');

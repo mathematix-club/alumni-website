@@ -1,5 +1,6 @@
 import { db } from './config.js';
 import { collection, addDoc, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { notifyDiscord } from './notify.js';
 
 // --- CONFIG FOR CLOUDINARY ---
 const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dqivrep05/image/upload";
@@ -164,6 +165,20 @@ document.getElementById('btnSubmit').addEventListener('click', async () => {
 
     try {
         await addDoc(collection(db, "requests"), requestData);
+
+        // Build a clean serializable payload (Firestore mutates submittedAt in-place)
+        const notifyPayload = { ...requestData };
+        delete notifyPayload.submittedAt;
+        delete notifyPayload.status;
+
+        // Grab the original student data stored in the select option
+        const nameSelect = document.getElementById('searchName');
+        const selectedOpt = nameSelect.options[nameSelect.selectedIndex];
+        const originalData = selectedOpt.dataset.student
+            ? JSON.parse(selectedOpt.dataset.student)
+            : null;
+
+        notifyDiscord('update_request', { request: notifyPayload, original: originalData });
         
         status.innerHTML = `<div class="alert alert-success">✅ Update Request Sent! Admin will review it.</div>`;
         document.getElementById('formSection').style.display = 'none';
